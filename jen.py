@@ -107,7 +107,7 @@ if uploaded_file is not None:
             if same:
                 if len(set(same)) > 1:
                     st.write(set(same))
-                    #st.write(set(same))#移除掉重覆的
+                    rename(set(same))
             #print(same)
                 
 
@@ -122,6 +122,7 @@ if uploaded_file is not None:
 
 
     df2 = pd.DataFrame(list(my_dict.items()),columns = ['插播名稱','播放次數']) 
+    st.write("====================================================")
     st.write("檔案下載預覽")
     st.table(df2)
 
