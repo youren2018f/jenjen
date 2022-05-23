@@ -126,7 +126,7 @@ uploaded_files = st.file_uploader("請上傳插播統計表xlsx檔", type = ".xl
 
 if st.button('按下我轉換'):
     for uploaded_file in uploaded_files:
-        df = pd.read_excel(source_file, header=0)
+        df = pd.read_excel(uploaded_file, header=0)
         if "A" in uploaded_file.name:
             df["類別"] = "A"
             df2 = compute(df)
