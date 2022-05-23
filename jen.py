@@ -4,80 +4,70 @@ import pandas as pd
 import streamlit as st
 from io import BytesIO
 from openpyxl.writer.excel import save_virtual_workbook
+import jieba
+import openpyxl
 
-st.title('''
-插播統計表處理
-''')
-st.header('上傳區')
+def generate_vectors(vec_a, vec_b):
+    check_dict = dict.fromkeys(set(vec_a) | set(vec_b), 0) #產生2個向量的交集的字典，且設定value為0
+    #比對check_dict，如果有存在則+1
+    import copy
+    c1_copy = copy.deepcopy(check_dict)
+    for a in vec_a:
+        for key in c1_copy.keys():
+            if a == key:
+                c1_copy[key] += 1
+    consine_list_1 = [value for value in c1_copy.values()] #轉換為cosine_list
+    c2_copy = copy.deepcopy(check_dict)
+    for b in vec_b:
+        for key in c2_copy.keys():
+            if b == key:
+                c2_copy[key] += 1
+    consine_list_2 = [value for value in c2_copy.values()] #轉換為cosine_list
+    return (consine_list_1, consine_list_2)
 
-uploaded_file = st.file_uploader("請上傳插播統計表xlsx檔", type = ".xlsx")
+#計算Cosine Similarity
+def cosine_similarity(vec_ab):
+    vec_a = vec_ab[0]
+    vec_b = vec_ab[-1]
+    # Dot and norm
+    dot = sum(a*b for a, b in zip(vec_a, vec_b))
+    norm_a = sum(a*a for a in vec_a) ** 0.5
+    norm_b = sum(b*b for b in vec_b) ** 0.5
 
-source_file = uploaded_file
+    # Cosine similarity
+    cos_sim = dot / (norm_a*norm_b)
+    return cos_sim
 
-if uploaded_file is not None:
 
-    df = pd.read_excel(source_file, header=0)
+def rename(inds):
+    shortest_word = min(inds, key = len)
+    re_name_list = []
+    for word in shortest_word:
+        matrix = []
+        for ind in inds:
+            if word in ind:
+                matrix.append(1)
+            else:
+                matrix.append(0)
+        if all(matrix):
+            re_name_list.append(word)
+    name = "".join(re_name_list)
+    my_str = f"改為名稱:{name}"
+    st.write(my_str)
+    name_dict = {}
+    name_dict[name] = inds
+    for key,values in name_dict.items():
+        for value in values:
+            try:
+                df["插播名稱"] = df["插播名稱"].replace(value, key)
+            except:
+                pass
+
+def compute(df):
     for i in range(len(df)):       
         str = df["插播名稱"][i]
         df["插播名稱"][i] = re.sub('\d{7}', '', str)
 
-
-    def generate_vectors(vec_a, vec_b):
-        check_dict = dict.fromkeys(set(vec_a) | set(vec_b), 0) #產生2個向量的交集的字典，且設定value為0
-        #比對check_dict，如果有存在則+1
-        import copy
-        c1_copy = copy.deepcopy(check_dict)
-        for a in vec_a:
-            for key in c1_copy.keys():
-                if a == key:
-                    c1_copy[key] += 1
-        consine_list_1 = [value for value in c1_copy.values()] #轉換為cosine_list
-        c2_copy = copy.deepcopy(check_dict)
-        for b in vec_b:
-            for key in c2_copy.keys():
-                if b == key:
-                    c2_copy[key] += 1
-        consine_list_2 = [value for value in c2_copy.values()] #轉換為cosine_list
-        return (consine_list_1, consine_list_2)
-
-    #計算Cosine Similarity
-    def cosine_similarity(vec_ab):
-        vec_a = vec_ab[0]
-        vec_b = vec_ab[-1]
-        # Dot and norm
-        dot = sum(a*b for a, b in zip(vec_a, vec_b))
-        norm_a = sum(a*a for a in vec_a) ** 0.5
-        norm_b = sum(b*b for b in vec_b) ** 0.5
-
-        # Cosine similarity
-        cos_sim = dot / (norm_a*norm_b)
-        return cos_sim
-
-    def rename(inds):
-        shortest_word = min(inds, key = len)
-        re_name_list = []
-        for word in shortest_word:
-            matrix = []
-            for ind in inds:
-                if word in ind:
-                    matrix.append(1)
-                else:
-                    matrix.append(0)
-            if all(matrix):
-                re_name_list.append(word)
-        name = "".join(re_name_list)
-        my_str = f"改為名稱:{name}"
-        st.write(my_str)
-        name_dict = {}
-        name_dict[name] = inds
-        for key,values in name_dict.items():
-            for value in values:
-                try:
-                    df["插播名稱"] = df["插播名稱"].replace(value, key)
-                except:
-                    pass
-
-    import jieba
     duplicate = [] #為了移除（1,3,4)之後的(3,4)
     for index_x in range(len(df)):
         same=[]
@@ -120,13 +110,30 @@ if uploaded_file is not None:
             my_dict[row['插播名稱']] = row['播放次數']
         else:        my_dict[row['插播名稱']] += row['播放次數']
 
-
     df2 = pd.DataFrame(list(my_dict.items()),columns = ['插播名稱','播放次數']) 
+    return df2
+
+
+
+st.title('''
+插播統計表處理
+''')
+st.header('上傳區')
+
+uploaded_file = st.file_uploader("請上傳插播統計表xlsx檔", type = ".xlsx")
+
+source_file = uploaded_file
+
+if uploaded_file is not None:
+
+    df = pd.read_excel(source_file, header=0)
+    df2 = compute(df)
+    
+    
     st.write("====================================================")
     st.write("檔案下載預覽")
     st.table(df2)
-
-    import openpyxl
+    
     wb = openpyxl.load_workbook(r"blank.xlsx")
     #指定那一個worksheet
     ws =wb['統計結果']
