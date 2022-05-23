@@ -120,28 +120,46 @@ st.title('''
 ''')
 st.header('上傳區')
 
-uploaded_file = st.file_uploader("請上傳插播統計表xlsx檔", type = ".xlsx")
 
-source_file = uploaded_file
+df_all = pd.DataFrame()
+uploaded_files = st.file_uploader("請上傳插播統計表xlsx檔", type = ".xlsx", accept_multiple_files=True)
 
-if uploaded_file is not None:
+if st.button('按下我轉換'):
+    for uploaded_file in uploaded_files:
+        df = pd.read_excel(source_file, header=0)
+        if "A" in uploaded_file.name:
+            df["類別"] = "A"
+            df2 = compute(df)
+        elif "B" in uploaded_file.name:
+            df["類別"] = "B"
+            df2 = compute(df)
+        elif "C" in uploaded_file.name:
+            df["類別"] = "C"
+            df2 = compute(df)
+        elif "D" in uploaded_file.name:
+            df["類別"] = "D"
+            df2 = compute(df)
+        elif "E" in uploaded_file.name:
+            df["類別"] = "E"
+            df2 = compute(df)
+        else:
+            df["類別"] = "unknow"
+            df2 = compute(df)
 
-    df = pd.read_excel(source_file, header=0)
-    df2 = compute(df)
-    
-    
+        df_all = pd.concat([df_all, df2])
+
     st.write("====================================================")
     st.write("檔案下載預覽")
-    st.table(df2)
-    
+    st.table(df_all)
+
     wb = openpyxl.load_workbook(r"blank.xlsx")
     #指定那一個worksheet
     ws =wb['統計結果']
     #開始疊代
     i = 2 #從第幾列開始
-    for ind in df2.index:
-        ws.cell(row=i, column=1).value = df2.loc[ind, "插播名稱"]
-        ws.cell(row=i, column=2).value = df2.loc[ind, "播放次數"]
+    for ind in df_all.index:
+        ws.cell(row=i, column=1).value = df_all.loc[ind, "插播名稱"]
+        ws.cell(row=i, column=2).value = df_all.loc[ind, "播放次數"]
         i = i + 1
     data = BytesIO(save_virtual_workbook(wb))
     st.header('下載區')
@@ -149,4 +167,42 @@ if uploaded_file is not None:
         data=data,
         mime='xlsx',
         file_name="插播統計表_修改過.xlsx")
+
+
+
+
+
+
+
+
+
+
+
+
+
+# if uploaded_file is not None:
+
+#     df = pd.read_excel(source_file, header=0)
+#     df2 = compute(df)
+    
+    
+#     st.write("====================================================")
+#     st.write("檔案下載預覽")
+#     st.table(df2)
+    
+#     wb = openpyxl.load_workbook(r"blank.xlsx")
+#     #指定那一個worksheet
+#     ws =wb['統計結果']
+#     #開始疊代
+#     i = 2 #從第幾列開始
+#     for ind in df2.index:
+#         ws.cell(row=i, column=1).value = df2.loc[ind, "插播名稱"]
+#         ws.cell(row=i, column=2).value = df2.loc[ind, "播放次數"]
+#         i = i + 1
+#     data = BytesIO(save_virtual_workbook(wb))
+#     st.header('下載區')
+#     st.download_button("下載檔案",
+#         data=data,
+#         mime='xlsx',
+#         file_name="插播統計表_修改過.xlsx")
 
