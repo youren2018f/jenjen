@@ -6,6 +6,7 @@ from io import BytesIO
 from openpyxl.writer.excel import save_virtual_workbook
 import jieba
 import openpyxl
+from datetime import date
 
 def generate_vectors(vec_a, vec_b):
     check_dict = dict.fromkeys(set(vec_a) | set(vec_b), 0) #產生2個向量的交集的字典，且設定value為0
@@ -116,60 +117,73 @@ def compute(df):
 
 
 st.title('''
-以Cosine Similarity合併類似檔案名稱，處理插播統計表
+以餘弦相似度(Cosine Similarity)計算插播統計表相似度
 ''')
+
+
+input_month = st.text_input('請輸入月份數字', str(date.today().month-1))
+
 st.header('上傳區')
 
 
-df_all = pd.DataFrame()
-uploaded_files = st.file_uploader("請上傳插播統計表xlsx檔", type = ".xlsx", accept_multiple_files=True)
-#調整順序
-st.write(uploaded_files)
 
-if st.button('按下我轉換'):
+
+df_all = pd.DataFrame()
+uploaded_files = st.file_uploader("請依序上傳插播統計表xlsx檔, A-E", type = ".xlsx", accept_multiple_files=True)
+
+
+if st.button('點擊開始運作...'):
 
     for uploaded_file in uploaded_files:
-        st.write(uploaded_file.name)
+        
         df = pd.read_excel(uploaded_file, header=0)
 
-        if "A" in uploaded_file.name:          
+        if "A" in uploaded_file.name:   
+            st.title("在A類中合併的項目:")       
             df2 = compute(df)
             df2["類別"] = "A"
         elif "B" in uploaded_file.name:
+            st.title("在B類中合併的項目:")   
             df2 = compute(df)
             df2["類別"] = "B"
             
         elif "C" in uploaded_file.name:
+            st.title("在C類中合併的項目:")   
             df2 = compute(df)
             df2["類別"] = "C"
             
         elif "D" in uploaded_file.name:
+            st.title("在D類中合併的項目:")   
             df2 = compute(df)
             df2["類別"] = "D"
        
         elif "E" in uploaded_file.name:
+            st.title("在E類中合併的項目:")   
             df2 = compute(df)
             df2["類別"] = "E"
         
         else:
+            st.title("在未知類中合併的項目:")   
             df2 = compute(df)
             df2["類別"] = "unknow"
             
-        df2
+     
+ 
         df_all = pd.concat([df_all, df2], ignore_index=True)
 
-    st.write("====================================================")
-    st.write("檔案下載預覽")
-    st.table(df_all)
+
 
     df_all["單位"] = "臺東分臺"
-    df_all["日期"] = "4月"
+    df_all["日期"] = str(input_month) + "月"
     df_all = df_all.reindex(columns = ["單位", "日期", "插播名稱", "類別", "播放次數"])
-    wb = openpyxl.load_workbook(r"活頁簿1.xlsx")
+    wb = openpyxl.load_workbook(r"blank.xlsx")
     #指定那一個worksheet
     ws =wb['8.臺東分台']
+    ws.cell(row=4, column=2).value = str(input_month) + "月"
     #開始疊代
-    i = 4 #從第幾列開始
+ 
+
+    i = 5 #從第幾列開始疊代
     for ind in df_all.index:
         ws.cell(row=i, column=1).value = df_all.loc[ind, "單位"]
         ws.cell(row=i, column=2).value = df_all.loc[ind, "日期"]
@@ -185,8 +199,8 @@ if st.button('按下我轉換'):
     st.download_button("下載檔案",
         data=data,
         mime='xlsx',
-        file_name="插播統計表_修改過.xlsx")
-
+        file_name="再撐一下就下班.xlsx")
+    st.write("按下下載檔案後，頁面會重載，這個是模組的問題，尚無法解決。")
 
 
 
