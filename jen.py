@@ -123,50 +123,70 @@ st.header('上傳區')
 
 df_all = pd.DataFrame()
 uploaded_files = st.file_uploader("請上傳插播統計表xlsx檔", type = ".xlsx", accept_multiple_files=True)
+#調整順序
+st.write(uploaded_files)
 
 if st.button('按下我轉換'):
-    for uploaded_file in uploaded_files:
-        df = pd.read_excel(uploaded_file, header=0)
-        if "A" in uploaded_file.name:
-            df["類別"] = "A"
-            df2 = compute(df)
-        elif "B" in uploaded_file.name:
-            df["類別"] = "B"
-            df2 = compute(df)
-        elif "C" in uploaded_file.name:
-            df["類別"] = "C"
-            df2 = compute(df)
-        elif "D" in uploaded_file.name:
-            df["類別"] = "D"
-            df2 = compute(df)
-        elif "E" in uploaded_file.name:
-            df["類別"] = "E"
-            df2 = compute(df)
-        else:
-            df["類別"] = "unknow"
-            df2 = compute(df)
 
-        df_all = pd.concat([df_all, df2])
+    for uploaded_file in uploaded_files:
+        st.write(uploaded_file.name)
+        df = pd.read_excel(uploaded_file, header=0)
+
+        if "A" in uploaded_file.name:          
+            df2 = compute(df)
+            df2["類別"] = "A"
+        elif "B" in uploaded_file.name:
+            df2 = compute(df)
+            df2["類別"] = "B"
+            
+        elif "C" in uploaded_file.name:
+            df2 = compute(df)
+            df2["類別"] = "C"
+            
+        elif "D" in uploaded_file.name:
+            df2 = compute(df)
+            df2["類別"] = "D"
+       
+        elif "E" in uploaded_file.name:
+            df2 = compute(df)
+            df2["類別"] = "E"
+        
+        else:
+            df2 = compute(df)
+            df2["類別"] = "unknow"
+            
+        df2
+        df_all = pd.concat([df_all, df2], ignore_index=True)
 
     st.write("====================================================")
     st.write("檔案下載預覽")
     st.table(df_all)
 
-    wb = openpyxl.load_workbook(r"blank.xlsx")
+    df_all["單位"] = "臺東分臺"
+    df_all["日期"] = "4月"
+    df_all = df_all.reindex(columns = ["單位", "日期", "插播名稱", "類別", "播放次數"])
+    wb = openpyxl.load_workbook(r"活頁簿1.xlsx")
     #指定那一個worksheet
-    ws =wb['統計結果']
+    ws =wb['8.臺東分台']
     #開始疊代
-    i = 2 #從第幾列開始
+    i = 4 #從第幾列開始
     for ind in df_all.index:
-        ws.cell(row=i, column=1).value = df_all.loc[ind, "插播名稱"]
-        ws.cell(row=i, column=2).value = df_all.loc[ind, "播放次數"]
+        ws.cell(row=i, column=1).value = df_all.loc[ind, "單位"]
+        ws.cell(row=i, column=2).value = df_all.loc[ind, "日期"]
+        ws.cell(row=i, column=5).value = df_all.loc[ind, "插播名稱"]
+        ws.cell(row=i, column=6).value = df_all.loc[ind, "類別"]
+        ws.cell(row=i, column=7).value = df_all.loc[ind, "播放次數"]
         i = i + 1
+
+
     data = BytesIO(save_virtual_workbook(wb))
+    
     st.header('下載區')
     st.download_button("下載檔案",
         data=data,
         mime='xlsx',
         file_name="插播統計表_修改過.xlsx")
+
 
 
 
