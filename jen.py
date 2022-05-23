@@ -121,7 +121,7 @@ st.title('''
 ''')
 
 
-input_month = st.text_input('請輸入月份數字，預設值為當下時前的上一個月', str(date.today().month-1))
+input_month = st.text_input('請輸入月份數字，預設值為當下時間的上一個月', str(date.today().month-1))
 
 st.header('上傳區')
 
