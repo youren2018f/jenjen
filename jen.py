@@ -121,7 +121,7 @@ st.title('''
 ''')
 
 
-input_month = st.text_input('請輸入月份數字', str(date.today().month-1))
+input_month = st.text_input('請輸入月份數字，預設值為當下時前的上一個月', str(date.today().month-1))
 
 st.header('上傳區')
 
@@ -129,7 +129,7 @@ st.header('上傳區')
 
 
 df_all = pd.DataFrame()
-uploaded_files = st.file_uploader("請依序上傳插播統計表xlsx檔, A-E", type = ".xlsx", accept_multiple_files=True)
+uploaded_files = st.file_uploader("請依序上傳(A-E)插播統計表xlsx檔, 檔名內要有(A-E)類別才會有對應的值", type = ".xlsx", accept_multiple_files=True)
 
 
 if st.button('點擊開始運作...'):
