@@ -116,7 +116,7 @@ def compute(df):
 
 
 st.title('''
-插播統計表處理
+以Cosine Similarity合併類似檔案名稱，處理插播統計表
 ''')
 st.header('上傳區')
 
